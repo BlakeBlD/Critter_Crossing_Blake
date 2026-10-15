@@ -46,6 +46,7 @@ class Game
   Text you_lose_text;
   Text back_to_menu_text;
   Text correct_accepted_text;
+  Text timer_text;
 
 
   sf::Sprite* character;
@@ -77,6 +78,8 @@ class Game
 
   int correct_accepted = 0;
   int incorrect_stamps = 0;
+
+  float timer = 30.f;
 };
 
 #endif // SFML_GAME_H

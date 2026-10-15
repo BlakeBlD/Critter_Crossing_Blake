@@ -58,6 +58,12 @@ bool Game::init()
 		sf::Vector2f(window.getSize().x * 0.1 - correct_accepted_text.getText()->getGlobalBounds().size.x * 0.1,
 		window.getSize().y * 0.94 - correct_accepted_text.getText()->getGlobalBounds().size.y * 0.94));
 
+	timer_text.initialiseText("Time remaining: " + std::to_string(timer));
+	timer_text.getText()->setPosition(
+		sf::Vector2f(window.getSize().x * 0.55 - timer_text.getText()->getGlobalBounds().size.x * 0.1,
+			window.getSize().y * 0.05 - timer_text.getText()->getGlobalBounds().size.y * 0.01));
+	timer_text.getText()->setFillColor(sf::Color::Black);
+
 
 
 	background_texture = new sf::Texture("../Data/Images/WhackaMole Worksheet/background.png");
@@ -127,6 +133,12 @@ void Game::update(float dt)
 
 	case INGAME:
 
+		timer -= dt;
+
+		int rounded_timer = std::ceil(timer);		
+		
+		timer_text.getText()->setString("Time remaining: " + std::to_string(rounded_timer));		
+
 		dragSprite(dragged);
 
 		accept_stamp->setPosition(sf::Vector2f(passport->getPosition().x + 10, passport->getPosition().y + 20));
@@ -164,20 +176,31 @@ void Game::update(float dt)
 			}
 		}
 
-		if(correct_accepted >= 5)
+		if(correct_accepted >= 5 && timer > 0)
 		{
 			state = WIN;
 			correct_accepted = 0;
 			incorrect_stamps = 0;
 			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 30.0f;
 		}
 
-		if(incorrect_stamps >= 5)
+		else if(incorrect_stamps >= 5 && timer > 0)
 		{
 			state = LOSE;
 			correct_accepted = 0;
 			incorrect_stamps = 0;
 			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 30.0f;
+		}
+
+		else if (timer <= 0)
+		{
+			state = LOSE;
+			correct_accepted = 0;
+			incorrect_stamps = 0;
+			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 30.0f;
 		}
 
 		break;
@@ -200,6 +223,7 @@ void Game::render()
 		window.draw(*character);
 		window.draw(*passport);
 		window.draw(*correct_accepted_text.getText());
+		window.draw(*timer_text.getText());
 
 		if(button_appear == true)
 		{
