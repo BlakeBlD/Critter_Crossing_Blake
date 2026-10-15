@@ -9,7 +9,9 @@
 enum Gamestate
 {
 	MENU,
-	INGAME
+	INGAME,
+	WIN,
+	LOSE,
 };
 
 
@@ -40,6 +42,11 @@ class Game
   Text menu_text;
   Text play_text;
   Text quit_text;
+  Text you_win_text;
+  Text you_lose_text;
+  Text back_to_menu_text;
+  Text correct_accepted_text;
+
 
   sf::Sprite* character;
   sf::Sprite* passport;
@@ -59,11 +66,17 @@ class Game
   sf::Texture* accept_stamp_tex;
   sf::Texture* reject_stamp_tex;
 
+  bool passport_accepted = false;
+  bool passport_rejected = false;
+  bool button_appear = false;
+
   bool should_accept;
 
   sf::Sprite* dragged = nullptr;
   sf::Vector2f drag_offset;
 
+  int correct_accepted = 0;
+  int incorrect_stamps = 0;
 };
 
 #endif // SFML_GAME_H

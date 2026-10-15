@@ -38,6 +38,28 @@ bool Game::init()
 		sf::Vector2f (window.getSize().x * 0.8 - quit_text.getText()->getGlobalBounds().size.x * 0.8,
 		window.getSize().y * 0.4 - quit_text.getText()->getGlobalBounds().size.y * 0.2));
 
+	you_win_text.initialiseText("You Win!");
+	you_win_text.getText()->setPosition(
+		sf::Vector2f (window.getSize().x * 0.5 - you_win_text.getText()->getGlobalBounds().size.x * 0.5,
+		window.getSize().y * 0.3 - you_win_text.getText()->getGlobalBounds().size.y * 0.3));
+
+	you_lose_text.initialiseText("You Lose!");
+	you_lose_text.getText()->setPosition(
+		sf::Vector2f(window.getSize().x * 0.5 - you_lose_text.getText()->getGlobalBounds().size.x * 0.5,
+		window.getSize().y * 0.35 - you_lose_text.getText()->getGlobalBounds().size.y * 0.35));
+
+	back_to_menu_text.initialiseText("Press 'q' to go back to menu!");
+	back_to_menu_text.getText()->setPosition(
+		sf::Vector2f(window.getSize().x * 0.45 - back_to_menu_text.getText()->getGlobalBounds().size.x * 0.45,
+		window.getSize().y * 0.5 - back_to_menu_text.getText()->getGlobalBounds().size.y * 0.5));
+
+	correct_accepted_text.initialiseText("Score: " + std::to_string(correct_accepted));
+	correct_accepted_text.getText()->setPosition(
+		sf::Vector2f(window.getSize().x * 0.1 - correct_accepted_text.getText()->getGlobalBounds().size.x * 0.1,
+		window.getSize().y * 0.94 - correct_accepted_text.getText()->getGlobalBounds().size.y * 0.94));
+
+
+
 	background_texture = new sf::Texture("../Data/Images/WhackaMole Worksheet/background.png");
 	background = new sf::Sprite(*background_texture);
 
@@ -57,8 +79,7 @@ bool Game::init()
 	reject_button_tex = new sf::Texture("../Data/Images/Critter Crossing/reject button.png");
 	accept_button = new sf::Sprite(*accept_button_tex);
 	reject_button = new sf::Sprite(*reject_button_tex);
-	accept_button->setPosition({ 780, 10 });
-	reject_button->setPosition({ 780, 120 });
+	
 
 
 	accept_stamp_tex = new sf::Texture("../Data/Images/Critter Crossing/accept.png");
@@ -108,6 +129,57 @@ void Game::update(float dt)
 
 		dragSprite(dragged);
 
+		accept_stamp->setPosition(sf::Vector2f(passport->getPosition().x + 10, passport->getPosition().y + 20));
+		reject_stamp->setPosition(sf::Vector2f(passport->getPosition().x + 10, passport->getPosition().y + 20));
+
+		if(character->getGlobalBounds().findIntersection(passport->getGlobalBounds()) && passport_accepted || character->getGlobalBounds().findIntersection(passport->getGlobalBounds()) && passport_rejected)
+		{
+			if(passport_accepted && should_accept == true)
+			{
+				correct_accepted++;
+				correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+				passport_accepted = false;
+				passport_rejected = false;
+				dragged = nullptr;
+				newAnimal();
+				std::cout<<correct_accepted;
+			}
+
+			else if(passport_rejected && should_accept == false)
+			{
+				passport_accepted = false;
+				passport_rejected = false;
+				dragged = nullptr;
+				newAnimal();
+			}
+
+			else
+			{
+				incorrect_stamps++;
+				passport_accepted = false;
+				passport_rejected = false;
+				dragged = nullptr;
+				newAnimal();
+				std::cout << incorrect_stamps;
+			}
+		}
+
+		if(correct_accepted >= 5)
+		{
+			state = WIN;
+			correct_accepted = 0;
+			incorrect_stamps = 0;
+			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+		}
+
+		if(incorrect_stamps >= 5)
+		{
+			state = LOSE;
+			correct_accepted = 0;
+			incorrect_stamps = 0;
+			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+		}
+
 		break;
 	}
 }
@@ -127,10 +199,36 @@ void Game::render()
 		window.draw(*background);
 		window.draw(*character);
 		window.draw(*passport);
-		window.draw(*accept_button);
-		window.draw(*reject_button);
+		window.draw(*correct_accepted_text.getText());
+
+		if(button_appear == true)
+		{
+			window.draw(*accept_button);
+			window.draw(*reject_button);
+		}
+		if (passport_accepted == true)
+		{
+			window.draw(*accept_stamp);
+		}
+		if (passport_rejected == true)
+		{
+			window.draw(*reject_stamp);
+		}
 
 		break;
+
+	case WIN:
+		window.draw(*you_win_text.getText());
+		window.draw(*back_to_menu_text.getText());
+		
+
+		break;
+	case LOSE:
+		window.draw(*you_lose_text.getText());
+		window.draw(*back_to_menu_text.getText());
+
+		break;
+
 	}
 }
 
@@ -152,7 +250,38 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
 			dragged = passport;
 		}
 
+		else if(accept_button->getGlobalBounds().contains(click))
+		{
+			passport_accepted = true;
+			passport_rejected = false;
+		}
+
+		else if (reject_button->getGlobalBounds().contains(click))
+		{
+			passport_rejected = true;
+			passport_accepted = false;
+		}
 		
+	}
+
+	if (event->button == sf::Mouse::Button::Right)
+	{
+		//Right mouse button was pressed
+		sf::Vector2f click = static_cast<sf::Vector2f>(event->position);
+		if (passport->getGlobalBounds().contains(click))
+		{
+			button_appear = true;
+			accept_button->setPosition(click);
+			reject_button->setPosition(sf::Vector2f(accept_button->getPosition().x, accept_button->getPosition().y + 100));
+		}
+
+		else
+		{
+			button_appear = false;
+		}
+		
+
+
 	}
 }
 
@@ -162,8 +291,16 @@ void Game::mouseButtonReleased(const sf::Event::MouseButtonReleased* event)
 	//Works the same as MouseButtonPressed
 	if (event->button == sf::Mouse::Button::Left)
 	{
+		
 		//Left mouse button was released
 		dragged = nullptr;
+	}
+
+	//Works the same as MouseButtonPressed
+	if (event->button == sf::Mouse::Button::Right)
+	{
+		//Right mouse button was released
+		
 	}
 }
 
@@ -212,6 +349,21 @@ void Game::keyPressed(const sf::Event::KeyPressed* event)
 			state = INGAME;
 		}
 		break;
+
+	case WIN:
+		if (event->scancode == sf::Keyboard::Scancode::Q)
+		{
+			state = MENU;
+		}
+
+		break;
+	case LOSE:
+		if (event->scancode == sf::Keyboard::Scancode::Q)
+		{
+			state = MENU;
+		}
+		break;
+
 	}
 
 }
@@ -244,7 +396,7 @@ void Game::newAnimal()
 	}
 
 	character->setTexture(animals[animal_index], true);
-	character->setScale({ 1.8, 1.8 });
+	character->setScale({ 1.3, 1.3 });
 	character->setPosition(sf::Vector2f(window.getSize().x / 12, window.getSize().y / 12));
 
 	passport->setTexture(passports[passport_index]);
