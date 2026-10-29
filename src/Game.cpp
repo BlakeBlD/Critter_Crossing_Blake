@@ -58,6 +58,12 @@ bool Game::init()
 		sf::Vector2f(window.getSize().x * 0.1 - correct_accepted_text.getText()->getGlobalBounds().size.x * 0.1,
 		window.getSize().y * 0.94 - correct_accepted_text.getText()->getGlobalBounds().size.y * 0.94));
 
+	timer_text.initialiseText("Time remaining: " + std::to_string(timer));
+	timer_text.getText()->setPosition(
+		sf::Vector2f(window.getSize().x * 0.55 - timer_text.getText()->getGlobalBounds().size.x * 0.1,
+			window.getSize().y * 0.05 - timer_text.getText()->getGlobalBounds().size.y * 0.01));
+	timer_text.getText()->setFillColor(sf::Color::Black);
+
 
 
 	background_texture = new sf::Texture("../Data/Images/WhackaMole Worksheet/background.png");
@@ -88,9 +94,17 @@ bool Game::init()
 	reject_stamp = new sf::Sprite(*reject_stamp_tex);
 
 
+	
+
+	animal_name_passport.initialiseText("No Name");
+	animal_name_passport.getText()->setFillColor(sf::Color::Black);
+
+	animal_name.initialiseText("No Name");
+	animal_name.getText()->setFillColor(sf::Color::Black);
+	animal_name.getText()->setPosition(sf::Vector2f(window.getSize().x * 0.096, window.getSize().y * 0.39));
+
 	newAnimal();
-
-
+	animalName();
 
   return true;
 }
@@ -127,10 +141,19 @@ void Game::update(float dt)
 
 	case INGAME:
 
+		timer -= dt;
+
+		int rounded_timer = std::ceil(timer);		
+		
+		timer_text.getText()->setString("Time remaining: " + std::to_string(rounded_timer));		
+
 		dragSprite(dragged);
 
 		accept_stamp->setPosition(sf::Vector2f(passport->getPosition().x + 10, passport->getPosition().y + 20));
 		reject_stamp->setPosition(sf::Vector2f(passport->getPosition().x + 10, passport->getPosition().y + 20));
+
+		animal_name_passport.getText()->setPosition(sf::Vector2f(passport->getPosition().x + 120, passport->getPosition().y + 235));
+		animal_name_passport.getText()->setCharacterSize(20);
 
 		if(character->getGlobalBounds().findIntersection(passport->getGlobalBounds()) && passport_accepted || character->getGlobalBounds().findIntersection(passport->getGlobalBounds()) && passport_rejected)
 		{
@@ -138,46 +161,53 @@ void Game::update(float dt)
 			{
 				correct_accepted++;
 				correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
-				passport_accepted = false;
-				passport_rejected = false;
-				dragged = nullptr;
 				newAnimal();
+				animalName();
 				std::cout<<correct_accepted;
 			}
 
 			else if(passport_rejected && should_accept == false)
 			{
-				passport_accepted = false;
-				passport_rejected = false;
-				dragged = nullptr;
 				newAnimal();
+				animalName();
+				incorrect_counter++;
+				std::cout << incorrect_counter;
 			}
 
 			else
 			{
-				incorrect_stamps++;
-				passport_accepted = false;
-				passport_rejected = false;
-				dragged = nullptr;
 				newAnimal();
-				std::cout << incorrect_stamps;
+				animalName();
+				incorrect_counter++;
+				std::cout << incorrect_counter;
 			}
 		}
 
-		if(correct_accepted >= 5)
+		if(correct_accepted >= 5 && timer > 0)
 		{
 			state = WIN;
 			correct_accepted = 0;
 			incorrect_stamps = 0;
 			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 120.0f;
 		}
 
-		if(incorrect_stamps >= 5)
+		else if(incorrect_stamps >= 5 && timer > 0)
 		{
 			state = LOSE;
 			correct_accepted = 0;
 			incorrect_stamps = 0;
 			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 120.0f;
+		}
+
+		else if (timer <= 0)
+		{
+			state = LOSE;
+			correct_accepted = 0;
+			incorrect_stamps = 0;
+			correct_accepted_text.getText()->setString("Score: " + std::to_string(correct_accepted));
+			timer = 120.0f;
 		}
 
 		break;
@@ -200,6 +230,9 @@ void Game::render()
 		window.draw(*character);
 		window.draw(*passport);
 		window.draw(*correct_accepted_text.getText());
+		window.draw(*timer_text.getText());
+		window.draw(*animal_name_passport.getText());
+		window.draw(*animal_name.getText());
 
 		if(button_appear == true)
 		{
@@ -384,7 +417,7 @@ void Game::newAnimal()
 	int animal_index = rand() % 3;
 	int passport_index = rand() % 3;
 
-	if(animal_index == passport_index)
+	if(animal_index == passport_index && name_correct == true)
 	{
 		should_accept = true;
 
@@ -402,6 +435,9 @@ void Game::newAnimal()
 	passport->setTexture(passports[passport_index]);
 	passport->setScale({ 0.6, 0.6 });
 	passport->setPosition(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 3));
+	passport_accepted = false;
+	passport_rejected = false;
+	dragged = nullptr;
 }
 
 void Game::dragSprite(sf::Sprite* sprite)
@@ -416,6 +452,150 @@ void Game::dragSprite(sf::Sprite* sprite)
 
 	}
 
+}
+
+void Game::animalName()
+{
+	std::vector<std::string> Animal_Names;
+
+	int animal_forename_index = rand() % 5;
+	int animal_surname_index = rand() % 5;
+
+	Animal_Names.push_back("David ");
+	Animal_Names.push_back("Ann ");
+	Animal_Names.push_back("John ");
+	Animal_Names.push_back("Stewart ");
+	Animal_Names.push_back("Emily ");
+	Animal_Names.push_back("Gray ");
+
+	std::string forename;
+	std::string surname;
+
+	if (animal_forename_index == 0)
+	{
+		forename = Animal_Names[0];
+	}
+	else if (animal_forename_index == 1)
+	{
+		forename = Animal_Names[1];
+	}
+	else if (animal_forename_index == 2)
+	{
+		forename = Animal_Names[2];
+	}
+	else if (animal_forename_index == 3)
+	{
+		forename = Animal_Names[3];
+	}
+	else if (animal_forename_index == 4)
+	{
+		forename = Animal_Names[4];
+	}
+	else if (animal_forename_index == 5)
+	{
+		forename = Animal_Names[5];
+	}
+
+	if (animal_surname_index == 0)
+	{
+		surname = Animal_Names[0];
+	}
+	else if (animal_surname_index == 1)
+	{
+		surname = Animal_Names[1];
+	}
+	else if (animal_surname_index == 2)
+	{
+		surname = Animal_Names[2];
+	}
+	else if (animal_surname_index == 3)
+	{
+		surname = Animal_Names[3];
+	}
+	else if (animal_surname_index == 4)
+	{
+		surname = Animal_Names[4];
+	}
+	else if (animal_surname_index == 5)
+	{
+		surname = Animal_Names[5];
+	}
+
+	std::string passport_forename;
+	std::string passport_surname;
+
+	int passport_animal_forename_index = rand() % 5;
+	int passport_animal_surname_index = rand() % 5;
+
+	if (passport_animal_forename_index == 0)
+	{
+		passport_forename = Animal_Names[0];
+	}
+	else if (passport_animal_forename_index == 1)
+	{
+		passport_forename = Animal_Names[1];
+	}
+	else if (passport_animal_forename_index == 2)
+	{
+		passport_forename = Animal_Names[2];
+	}
+	else if (passport_animal_forename_index == 3)
+	{
+		passport_forename = Animal_Names[3];
+	}
+	else if (passport_animal_forename_index == 4)
+	{
+		passport_forename = Animal_Names[4];
+	}
+	else if (passport_animal_forename_index == 5)
+	{
+		passport_forename = Animal_Names[5];
+	}
+
+	if (passport_animal_surname_index == 0)
+	{
+		passport_surname = Animal_Names[0];
+	}
+	else if (passport_animal_surname_index == 1)
+	{
+		passport_surname = Animal_Names[1];
+	}
+	else if (passport_animal_surname_index == 2)
+	{
+		passport_surname = Animal_Names[2];
+	}
+	else if (passport_animal_surname_index == 3)
+	{
+		passport_surname = Animal_Names[3];
+	}
+	else if (passport_animal_surname_index == 4)
+	{
+		passport_surname = Animal_Names[4];
+	}
+	else if (passport_animal_surname_index == 5)
+	{
+		passport_surname = Animal_Names[5];
+	}
+	animal_name.getText()->setString(forename + surname);
+	animal_name_passport.getText()->setString(passport_forename + passport_surname);
+
+	if(incorrect_counter == 3)
+	{
+		animal_name_passport.getText()->setString(forename + surname);
+		animal_name.getText()->setString(forename + surname);
+		incorrect_counter = 0;
+	}
+
+	if (animal_name.getText()->getString().toAnsiString().compare(animal_name_passport.getText()->getString()))
+	{
+		name_correct = true;
+	}
+	else
+	{
+		name_correct = false;
+	}
+
+	
 }
 
 
