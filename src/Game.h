@@ -29,6 +29,7 @@ class Game
   void keyReleased(const sf::Event::KeyReleased* event);
   void newAnimal();
   void dragSprite(sf::Sprite* sprite);
+  void animalName();
 
  private:
   sf::RenderWindow& window;
@@ -47,8 +48,9 @@ class Game
   Text back_to_menu_text;
   Text correct_accepted_text;
   Text timer_text;
-
-
+  Text animal_name_passport;
+  Text animal_name;
+ 
   sf::Sprite* character;
   sf::Sprite* passport;
 
@@ -72,6 +74,7 @@ class Game
   bool button_appear = false;
 
   bool should_accept;
+  bool name_correct;
 
   sf::Sprite* dragged = nullptr;
   sf::Vector2f drag_offset;
@@ -79,7 +82,9 @@ class Game
   int correct_accepted = 0;
   int incorrect_stamps = 0;
 
-  float timer = 30.f;
+  float timer = 120.f;
+
+  int incorrect_counter = 0;
 };
 
 #endif // SFML_GAME_H
